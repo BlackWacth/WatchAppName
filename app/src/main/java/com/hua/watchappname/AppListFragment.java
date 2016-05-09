@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
@@ -70,6 +71,8 @@ public class AppListFragment extends Fragment implements LoaderManager.LoaderCal
         }
         mAdapter = new AppRecyclerAdapter(getActivity(), mList);
         mRecyclerView.setAdapter(mAdapter);
+        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        mRecyclerView.setHasFixedSize(true);
         getLoaderManager().initLoader(0x1111, null, this);
         return view;
     }
@@ -83,7 +86,7 @@ public class AppListFragment extends Fragment implements LoaderManager.LoaderCal
     public void onLoadFinished(Loader<List<App>> loader, List<App> data) {
         mList.clear();
         mList.addAll(data);
-        mAdapter.notifyDataSetChanged();
+        mAdapter.notifyAll(data);
     }
 
     @Override
@@ -120,20 +123,39 @@ public class AppListFragment extends Fragment implements LoaderManager.LoaderCal
              */
             @Override
             public boolean onQueryTextChange(String newText) {
-                L.i("newText : " + newText);
-                doSearch(newText);
+                L.i("query = " + newText);
+//                doSearch(newText);
+                mAdapter.getFilter().filter(newText);
+                mRecyclerView.scrollToPosition(0);
                 return true;
             }
         });
-        searchView.setOnCloseListener(new SearchView.OnCloseListener() {
-            @Override
-            public boolean onClose() {
-                return false;
+//        searchView.setOnCloseListener(new SearchView.OnCloseListener() {
+//            @Override
+//            public boolean onClose() {
+//                return false;
+//            }
+//        });
+    }
+
+    private List<App> filter(List<App> apps, String query) {
+        query = query.toLowerCase();
+        final List<App> filterApps = new ArrayList<>();
+        for(App app : apps){
+            final String appName = app.getAppName().toLowerCase();
+            final String pckName = app.getPckName().toLowerCase();
+            if(appName.contains(query) || pckName.contains(query)){
+                filterApps.add(app);
             }
-        });
+        }
+        return filterApps;
     }
 
     private void doSearch(String searchText) {
-
+        L.i("all = " + mList.size());
+        final List<App> filterApps = filter(mList, searchText);
+        L.i("filter = " + filterApps.size());
+        mAdapter.animationTo(filterApps);
+        mRecyclerView.scrollToPosition(0);
     }
 }
