@@ -67,8 +67,8 @@ public class AppRecyclerAdapter extends RecyclerView.Adapter<AppRecyclerAdapter.
 
     public void animationTo(List<App> apps) {
         applyAndAnimateRemovals(apps);
-        applyAndAnimateAdditions(apps);
-        applyAndAnimateMovedItem(apps);
+//        applyAndAnimateAdditions(apps);
+//        applyAndAnimateMovedItem(apps);
     }
 
     private void applyAndAnimateRemovals(List<App> newApps) {
@@ -115,11 +115,12 @@ public class AppRecyclerAdapter extends RecyclerView.Adapter<AppRecyclerAdapter.
     }
 
     private App removeItem(int position) {
-        final App app = mList.remove(position);
-//        L.i("------------> " + app.toString());
-        notifyDataSetChanged();
-//        notifyItemRemoved(position);  //报下标越界,IndexOutOfBoundsException
-        return app;
+//        final App app = mList.remove(position);
+        L.i("------------> " + position);
+//        notifyDataSetChanged();
+
+        notifyItemRemoved(1);  //报下标越界,IndexOutOfBoundsException
+        return null;
     }
 
     @Override
