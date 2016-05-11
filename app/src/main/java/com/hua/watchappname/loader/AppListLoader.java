@@ -6,6 +6,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.support.v4.content.AsyncTaskLoader;
+import android.text.SpannableString;
 
 import com.hua.watchappname.entity.App;
 import com.hua.watchappname.global.C;
@@ -40,10 +41,10 @@ public class AppListLoader extends AsyncTaskLoader<List<App>>{
         App app = null;
         for(PackageInfo info : packages) {
             app = new App();
-            app.setPckName(info.packageName);
+            app.setPckName(new SpannableString(info.packageName));
             app.setVersion(info.versionName);
             ApplicationInfo appInfo = info.applicationInfo;
-            app.setAppName(appInfo.loadLabel(mPackageManager).toString());
+            app.setAppName(new SpannableString(appInfo.loadLabel(mPackageManager).toString()));
             app.setIcon(appInfo.loadIcon(mPackageManager));
             if((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) {
                 app.setType(C.USER_APP);
@@ -57,7 +58,7 @@ public class AppListLoader extends AsyncTaskLoader<List<App>>{
             Collator mCollator = Collator.getInstance();
             @Override
             public int compare(App lhs, App rhs) {
-                return mCollator.compare(lhs.getAppName(), rhs.getAppName());
+                return mCollator.compare(lhs.getAppName().toString(), rhs.getAppName().toString());
             }
         });
         return apps;

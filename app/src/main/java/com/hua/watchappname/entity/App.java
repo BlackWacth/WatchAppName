@@ -1,19 +1,20 @@
 package com.hua.watchappname.entity;
 
 import android.graphics.drawable.Drawable;
+import android.text.SpannableString;
 
 public class App {
 
     private Drawable icon;
-    private String appName;
-    private String pckName;
+    private SpannableString appName;
+    private SpannableString pckName;
     private String version;
     private int type;
 
     public App() {
     }
 
-    public App(Drawable icon, String appName, String pckName, String version, int type) {
+    public App(Drawable icon, SpannableString appName, SpannableString pckName, String version, int type) {
         this.icon = icon;
         this.appName = appName;
         this.pckName = pckName;
@@ -29,19 +30,19 @@ public class App {
         this.icon = icon;
     }
 
-    public String getAppName() {
+    public SpannableString getAppName() {
         return appName;
     }
 
-    public void setAppName(String appName) {
+    public void setAppName(SpannableString appName) {
         this.appName = appName;
     }
 
-    public String getPckName() {
+    public SpannableString getPckName() {
         return pckName;
     }
 
-    public void setPckName(String pckName) {
+    public void setPckName(SpannableString pckName) {
         this.pckName = pckName;
     }
 

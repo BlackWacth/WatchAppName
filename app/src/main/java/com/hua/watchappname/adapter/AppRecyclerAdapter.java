@@ -1,7 +1,9 @@
 package com.hua.watchappname.adapter;
 
 import android.content.Context;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.text.SpannableString;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +13,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.hua.watchappname.R;
+import com.hua.watchappname.adapter.listener.OnRVItemClickListener;
+import com.hua.watchappname.adapter.listener.OnRVItemLongClickListener;
 import com.hua.watchappname.entity.App;
 import com.hua.watchappname.utils.KeywordUtils;
 import com.hua.watchappname.utils.L;
@@ -25,12 +29,15 @@ public class AppRecyclerAdapter extends RecyclerView.Adapter<AppRecyclerAdapter.
     private Filter mFilter;
     private int mColor;
 
+    private OnRVItemClickListener<App> mItemClickListener;
+    private OnRVItemLongClickListener<App> mItemLongClickListener;
+
     public AppRecyclerAdapter(Context context, List<App> list) {
         mContext = context;
         originalApps = list;
         mList = new ArrayList<>(list);
         mColor = mContext.getResources().getColor(R.color.colorAccent);
-        setHasStableIds(true);
+//        setHasStableIds(true);
     }
 
     @Override
@@ -40,13 +47,29 @@ public class AppRecyclerAdapter extends RecyclerView.Adapter<AppRecyclerAdapter.
     }
 
     @Override
-    public void onBindViewHolder(AppHolder holder, int position) {
-        App app = mList.get(position);
+    public void onBindViewHolder(final AppHolder holder, int position) {
+        final App app = mList.get(position);
         holder.icon.setImageDrawable(app.getIcon());
-        String name = KeywordUtils.matcherSearchText(mColor, app.getAppName(), "视频").toString();
-        String pck = KeywordUtils.matcherSearchText(mColor, app.getPckName(), "android").toString();
-        holder.appName.setText(name);
-        holder.pckName.setText(pck);
+        holder.appName.setText(app.getAppName());
+        holder.pckName.setText(app.getPckName());
+        holder.container.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mItemClickListener != null) {
+                    mItemClickListener.onItemClick(v, holder.getAdapterPosition(), app);
+                }
+            }
+        });
+
+        holder.container.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                if(mItemLongClickListener != null) {
+                    mItemLongClickListener.onItemLongClick(v, holder.getAdapterPosition(), app);
+                }
+                return true;
+            }
+        });
     }
 
     @Override
@@ -54,10 +77,26 @@ public class AppRecyclerAdapter extends RecyclerView.Adapter<AppRecyclerAdapter.
         return mList != null ? mList.size() : 0;
     }
 
-    @Override
-    public long getItemId(int position) {
-        return position;
+    public OnRVItemClickListener<App> getItemClickListener() {
+        return mItemClickListener;
     }
+
+    public void addItemClickListener(OnRVItemClickListener<App> itemClickListener) {
+        mItemClickListener = itemClickListener;
+    }
+
+    public OnRVItemLongClickListener<App> getItemLongClickListener() {
+        return mItemLongClickListener;
+    }
+
+    public void addItemLongClickListener(OnRVItemLongClickListener<App> itemLongClickListener) {
+        mItemLongClickListener = itemLongClickListener;
+    }
+
+    //    @Override
+//    public long getItemId(int position) {
+//        return position;
+//    }
 
     public void notifyAll(List<App> apps) {
         mList.clear();
@@ -67,7 +106,7 @@ public class AppRecyclerAdapter extends RecyclerView.Adapter<AppRecyclerAdapter.
 
     public void animationTo(List<App> apps) {
         applyAndAnimateRemovals(apps);
-//        applyAndAnimateAdditions(apps);
+        applyAndAnimateAdditions(apps);
 //        applyAndAnimateMovedItem(apps);
     }
 
@@ -75,14 +114,12 @@ public class AppRecyclerAdapter extends RecyclerView.Adapter<AppRecyclerAdapter.
         for(int i = mList.size()-1; i >= 0; i--){
             final App app = mList.get(i);
             if(!newApps.contains(app)) {
-//                L.i("index = " + i);
                 removeItem(i);
             }
         }
     }
 
     private void applyAndAnimateAdditions(List<App> newApps) {
-//        L.i("add app = " + newApps.size());
         for(int i = 0; i < newApps.size(); i++) {
             final App app = newApps.get(i);
             if(!mList.contains(app)) {
@@ -109,18 +146,14 @@ public class AppRecyclerAdapter extends RecyclerView.Adapter<AppRecyclerAdapter.
     }
 
     private void addItem(int position, App app) {
-//        L.i("add ===> " + app.toString());
         mList.add(position, app);
         notifyItemInserted(position);
     }
 
     private App removeItem(int position) {
-//        final App app = mList.remove(position);
-        L.i("------------> " + position);
-//        notifyDataSetChanged();
-
-        notifyItemRemoved(1);  //报下标越界,IndexOutOfBoundsException
-        return null;
+        final App app = mList.remove(position);
+        notifyItemRemoved(position);
+        return app;
     }
 
     @Override
@@ -162,17 +195,17 @@ public class AppRecyclerAdapter extends RecyclerView.Adapter<AppRecyclerAdapter.
         private List<App> filter(List<App> apps, String query) {
             query = query.toLowerCase();
             final List<App> filterApps = new ArrayList<>();
-            int color = mContext.getResources().getColor(R.color.colorAccent);
             for(App app : apps){
-                final String appName = app.getAppName().toLowerCase();
-                final String pckName = app.getPckName().toLowerCase();
+                final String appName = app.getAppName().toString().toLowerCase();
+                final String pckName = app.getPckName().toString().toLowerCase();
                 if(appName.contains(query) || pckName.contains(query)){
-                    String name = KeywordUtils.matcherSearchText(color, app.getAppName(), query).toString();
-                    String pck = KeywordUtils.matcherSearchText(color, app.getPckName(), query).toString();
-                    L.i("name = " + name);
-                    L.i("pck = " + pck);
+                    SpannableString name = KeywordUtils.matcherSearchText(mColor, app.getAppName().toString(), query);
+                    SpannableString pName = KeywordUtils.matcherSearchText(mColor, app.getPckName().toString(), query);
+                    L.i("app : " + name);
+                    L.i("pck : " + pName);
+
                     app.setAppName(name);
-                    app.setPckName(pck);
+                    app.setPckName(pName);
                     filterApps.add(app);
                 }
             }
@@ -182,12 +215,14 @@ public class AppRecyclerAdapter extends RecyclerView.Adapter<AppRecyclerAdapter.
 
     class AppHolder extends RecyclerView.ViewHolder{
 
+        CardView container;
         ImageView icon;
         TextView appName;
         TextView pckName;
 
         public AppHolder(View itemView) {
             super(itemView);
+            container = (CardView) itemView.findViewById(R.id.item_card_view);
             icon = (ImageView) itemView.findViewById(R.id.item_app_icon);
             appName = (TextView) itemView.findViewById(R.id.item_app_name);
             pckName = (TextView) itemView.findViewById(R.id.item_app_package_name);
