@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.provider.Settings;
@@ -14,6 +15,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v4.widget.ContentLoadingProgressBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -52,7 +54,8 @@ public class AppListFragment extends Fragment implements LoaderManager.LoaderCal
     private List<App> mList;
     private SearchView mSearchView;
     private int mColor;
-    ClipboardManager mClipboardManager;
+    private ClipboardManager mClipboardManager;
+    private ContentLoadingProgressBar mProgressBar;
 
     public AppListFragment() {
 
@@ -81,6 +84,7 @@ public class AppListFragment extends Fragment implements LoaderManager.LoaderCal
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_app_list, container, false);
         mRecyclerView = (RecyclerView) view.findViewById(R.id.app_recycler_view);
+        mProgressBar = (ContentLoadingProgressBar) view.findViewById(R.id.app_progress_bar);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         if(mList == null) {
@@ -100,7 +104,6 @@ public class AppListFragment extends Fragment implements LoaderManager.LoaderCal
         ClipData data = ClipData.newPlainText(text, text);
         mClipboardManager.setPrimaryClip(data);
         showSnackbar("复制成功");
-//        Toast.makeText(getActivity(), "复制成功", Toast.LENGTH_SHORT).show();
     }
 
     private void showSnackbar(String text) {
@@ -185,11 +188,13 @@ public class AppListFragment extends Fragment implements LoaderManager.LoaderCal
 
     @Override
     public Loader<List<App>> onCreateLoader(int id, Bundle args) {
+        mProgressBar.show();
         return new AppListLoader(getActivity(), mAppType);
     }
 
     @Override
     public void onLoadFinished(Loader<List<App>> loader, List<App> data) {
+        mProgressBar.hide();
         mList.clear();
         mList.addAll(data);
         mAdapter.notifyAll(data);
@@ -209,7 +214,6 @@ public class AppListFragment extends Fragment implements LoaderManager.LoaderCal
     }
 
     private void initSearchView(SearchView searchView) {
-        searchView.setIconified(true);
         searchView.setIconifiedByDefault(true);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             /**
@@ -235,6 +239,13 @@ public class AppListFragment extends Fragment implements LoaderManager.LoaderCal
                 return true;
             }
         });
+
+        searchView.setOnCloseListener(new SearchView.OnCloseListener() {
+            @Override
+            public boolean onClose() {
+                return true;
+            }
+        });
     }
 
     private List<App> filter(List<App> apps, String query) {
@@ -244,16 +255,8 @@ public class AppListFragment extends Fragment implements LoaderManager.LoaderCal
             final String appName = app.getAppName().toString().toLowerCase();
             final String pckName = app.getPckName().toString().toLowerCase();
             if(appName.contains(query) || pckName.contains(query)){
-//                app.setAppName(KeywordUtils.matcherSearchText(mColor, app.getAppName().toString(), query));
-//                app.setPckName(KeywordUtils.matcherSearchText(mColor, app.getPckName().toString(), query));
-                SpannableString name = KeywordUtils.matcherSearchText(mColor, app.getAppName().toString(), query);
-                SpannableString pName = KeywordUtils.matcherSearchText(mColor, app.getPckName().toString(), query);
-                L.i("app : " + name);
-                L.i("pck : " + pName);
-
-                app.setAppName(name);
-                app.setPckName(pName);
-
+                app.setAppName(KeywordUtils.matcherSearchText(mColor, app.getAppName().toString(), query));
+                app.setPckName(KeywordUtils.matcherSearchText(mColor, app.getPckName().toString(), query));
                 filterApps.add(app);
             }
         }
@@ -264,5 +267,10 @@ public class AppListFragment extends Fragment implements LoaderManager.LoaderCal
         final List<App> filterApps = filter(mList, searchText);
         mAdapter.animationTo(filterApps);
         mRecyclerView.scrollToPosition(0);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
     }
 }

@@ -115,6 +115,9 @@ public class AppRecyclerAdapter extends RecyclerView.Adapter<AppRecyclerAdapter.
             final App app = mList.get(i);
             if(!newApps.contains(app)) {
                 removeItem(i);
+            }else {
+                App newApp = newApps.get(newApps.indexOf(app));
+                changeItem(i, newApp);
             }
         }
     }
@@ -154,6 +157,11 @@ public class AppRecyclerAdapter extends RecyclerView.Adapter<AppRecyclerAdapter.
         final App app = mList.remove(position);
         notifyItemRemoved(position);
         return app;
+    }
+
+    private void changeItem(int positon, App newApp) {
+        mList.set(positon, newApp);
+        notifyItemChanged(positon);
     }
 
     @Override
